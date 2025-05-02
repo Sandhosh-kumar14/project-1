@@ -16,7 +16,7 @@ dotenv.config();
 
 
 const allowedOrigins = [
-  'https://precious-cactus-86ca12.netlify.app',
+  'https://precious-cactus-86ca12.netlify.app/',
   'http://localhost:5173',
 ];
 

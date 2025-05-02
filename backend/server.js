@@ -9,44 +9,22 @@ import taskRoutes from './routes/tasks.js';
 import userRoutes from './routes/users.js';
 import { verifySocketToken } from './middleware/auth.js';
 
+
+
+// Load environment variables
 dotenv.config();
 
-const app = express();
-const server = http.createServer(app);
 
-// ✅ Allowed frontend origins
 const allowedOrigins = [
   'https://precious-cactus-86ca12.netlify.app',
   'http://localhost:5173',
 ];
 
-// ✅ CORS middleware
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('CORS not allowed for this origin'));
-    }
-  },
-  credentials: true,
-};
+// Create Express app
+const app = express();
+const server = http.createServer(app);
 
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // ✅ Preflight support
-app.use(express.json());
-
-// ✅ Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/tasks', taskRoutes);
-app.use('/api/users', userRoutes);
-
-// ✅ Health check
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'ok', message: 'Server is running' });
-});
-
-// ✅ Socket.IO setup
+// Socket.IO setup
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
@@ -55,54 +33,85 @@ const io = new Server(server, {
   },
 });
 
+// Middleware
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+}));
+app.use(express.json());
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api/users', userRoutes);
+
+// Health check route
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Server is running' });
+});
+
+// Create socket.io connection
 const onlineUsers = new Set();
 
 io.use(verifySocketToken);
 
 io.on('connection', (socket) => {
-  console.log('Socket connected:', socket.userId);
+  console.log('New client connected', socket.userId);
+  
+  // Add user to online users
   onlineUsers.add(socket.userId);
-
+  
+  // Broadcast to all clients that this user is online
   socket.broadcast.emit('member_connected', socket.userId);
+  
+  // Send list of online users to the newly connected client
   socket.emit('online_members', Array.from(onlineUsers));
+  
+  // Join a room with the user's ID to allow direct messages
   socket.join(socket.userId);
-
+  
+  // Handle disconnection
   socket.on('disconnect', () => {
-    console.log('Socket disconnected:', socket.userId);
+    console.log('Client disconnected', socket.userId);
     onlineUsers.delete(socket.userId);
     io.emit('member_disconnected', socket.userId);
   });
 });
 
+// Make io accessible to route handlers
 app.set('io', io);
 
-// ✅ MongoDB connection
+// Connect to MongoDB with retry logic
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI, {
+    const conn = await mongoose.connect(process.env.MONGO_URI, {
       retryWrites: true,
       w: 'majority',
     });
-    console.log('MongoDB connected');
-
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    
+    // Start server only after successful DB connection
     server.listen(process.env.PORT || 5000, () => {
       console.log(`Server running on port ${process.env.PORT || 5000}`);
     });
-  } catch (err) {
-    console.error('MongoDB connection error:', err.message);
-    setTimeout(connectDB, 5000); // Retry after 5s
+  } catch (error) {
+    console.error('MongoDB connection error:', error.message);
+    // Retry connection after 5 seconds
+    setTimeout(connectDB, 5000);
   }
 };
 
+// Initial database connection
 connectDB();
 
-// ✅ Error handling
+// Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
   process.exit(1);
 });
 
+// Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection:', promise, 'reason:', reason);
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   process.exit(1);
 });

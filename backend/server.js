@@ -16,7 +16,7 @@ dotenv.config();
 
 
 const allowedOrigins = [
-  'http://localhost:5173',
+  'https://front-end-alpha-beryl.vercel.app'
 ];
 
 // Create Express app

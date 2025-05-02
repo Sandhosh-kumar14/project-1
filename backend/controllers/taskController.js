@@ -1,7 +1,5 @@
 import Task from '../models/Task.js';
 import User from '../models/User.js';
-import sendEmail from '../utils/emailService.js';
-import { sendTaskUpdateEmail } from '../utils/emailService.js';
 
 
 // Get all tasks

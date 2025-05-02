@@ -14,10 +14,12 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// Socket.IO setup
+const allowedOrigins = [
+'https://precious-cactus-86ca12.netlify.app'];
+
 const io = new Server(server, {
   cors: {
-    origin: 'https://precious-cactus-86ca12.netlify.app',
+    origin:allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   },
@@ -25,7 +27,7 @@ const io = new Server(server, {
 
 // Middleware
 app.use(cors({
-  origin: 'https://precious-cactus-86ca12.netlify.app',
+  origin: allowedOrigins,
   credentials: true,
 }));
 app.use(express.json());

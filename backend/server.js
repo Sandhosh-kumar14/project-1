@@ -16,7 +16,6 @@ dotenv.config();
 
 
 const allowedOrigins = [
-  'https://storied-muffin-bceac7.netlify.app',
   'http://localhost:5173',
 ];
 

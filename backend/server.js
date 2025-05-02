@@ -14,6 +14,12 @@ import { verifySocketToken } from './middleware/auth.js';
 // Load environment variables
 dotenv.config();
 
+const allowedOrigins = [
+  'https://front-end-alpha-beryl.vercel.app',
+  'https://front-end-git-main-sandhosh-kumar14s-projects.vercel.app',
+  'https://front-9nd96sm99-sandhosh-kumar14s-projects.vercel.app'
+];
+
 // Create Express app
 const app = express();
 const server = http.createServer(app);
@@ -21,7 +27,7 @@ const server = http.createServer(app);
 // Socket.IO setup
 const io = new Server(server, {
   cors: {
-    origin: 'https://front-end-alpha-beryl.vercel.app',
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   },
@@ -29,7 +35,7 @@ const io = new Server(server, {
 
 // Middleware
 app.use(cors({
-  origin: 'https://front-end-alpha-beryl.vercel.app',
+  origin: allowedOrigins,
   credentials: true,
 }));
 app.use(express.json());

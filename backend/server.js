@@ -16,7 +16,7 @@ dotenv.config();
 
 
 const allowedOrigins = [
-  'https://visionary-sawine-55f5be.netlify.app',
+  'https://storied-muffin-bceac7.netlify.app',
   'http://localhost:5173',
 ];
 
